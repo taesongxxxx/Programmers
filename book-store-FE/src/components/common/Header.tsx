@@ -1,26 +1,41 @@
 import { styled } from "styled-components";
 import ThemeSwitcher from "../header/ThemeSwitcher";
 import logo from "../../assets/images/logo.png";
-import { FaBeer, FaRegUser, FaSignInAlt } from "react-icons/fa";
+import {
+  FaAngleRight,
+  FaBars,
+  FaBeer,
+  FaRegUser,
+  FaSignInAlt,
+  FaUserCircle,
+} from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Category } from "../../models/category.model";
 import { fetchCategory } from "../../api/category.api";
 import { useCategory } from "../../hooks/useCategory";
 import { useAuthStore } from "../../store/authStore";
+import Dropdown from "./Dropdown";
 
 function Header() {
   const { category } = useCategory();
   const { isloggedIn, storeLogout } = useAuthStore();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <HeaderStyle>
+    <HeaderStyle $isOpen ={isMobileOpen}>
       <h1 className="logo">
         <Link to="/">
           <img src={logo} alt="book store" />
         </Link>
       </h1>
       <nav className="category">
+        <button
+          className="menu-button"
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+        >
+          {isMobileOpen ? <FaAngleRight /> : <FaBars />}
+        </button>
         <ul>
           {category.map((item) => (
             <li key={item.category_id}>
@@ -38,35 +53,50 @@ function Header() {
         </ul>
       </nav>
       <nav className="auth">
-        {isloggedIn && (
-          <ul>
-            <li><Link to="/cart">장바구니</Link></li>
-            <li><Link to="/orderlist">주문 내역</Link></li>
-            <li><button onClick={storeLogout}>로그아웃</button></li>
-          </ul>
-        )}
-        {!isloggedIn && (
-          <ul>
-            <li>
-              <Link to="/login">
-                {FaSignInAlt({}) as JSX.Element}
-                로그인
-              </Link>
-            </li>
-            <li>
-              <Link to="/signup">
-                {FaRegUser({} as JSX.Element)}
-                회원가입
-              </Link>
-            </li>
-          </ul>
-        )}
+        <Dropdown toggleButton={<FaUserCircle />}>
+          <>
+            {isloggedIn && (
+              <ul>
+                <li>
+                  <Link to="/cart">장바구니</Link>
+                </li>
+                <li>
+                  <Link to="/orderlist">주문 내역</Link>
+                </li>
+                <li>
+                  <button onClick={storeLogout}>로그아웃</button>
+                </li>
+              </ul>
+            )}
+            {!isloggedIn && (
+              <ul>
+                <li>
+                  <Link to="/login">
+                    {FaSignInAlt({}) as JSX.Element}
+                    로그인
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/signup">
+                    {FaRegUser({} as JSX.Element)}
+                    회원가입
+                  </Link>
+                </li>
+              </ul>
+            )}
+            <ThemeSwitcher />
+          </>
+        </Dropdown>
       </nav>
     </HeaderStyle>
   );
 }
 
-const HeaderStyle = styled.header`
+interface HeaderStyleProps {
+  $isOpen: boolean;
+}
+
+const HeaderStyle = styled.header<HeaderStyleProps>`
   width: 100%;
   margin: 0 auto;
   max-width: ${({ theme }) => theme.layout.width.large};
@@ -84,6 +114,9 @@ const HeaderStyle = styled.header`
   }
 
   .category {
+    .menu-button {
+      display: none;
+    }
     ul {
       display: flex;
       gap: 32px;
@@ -106,13 +139,18 @@ const HeaderStyle = styled.header`
   .auth {
     ul {
       display: flex;
+      width: 100px;
+      flex-direction: column;
       gap: 16px;
       li {
-        a, button {
+        a,
+        button {
           font-size: 1rem;
           font-weight: 600;
           text-decoration: none;
           display: flex;
+          justify-content: center;
+          width: 100%;
           align-items: center;
           line-height: 1;
           background: none;
@@ -123,6 +161,54 @@ const HeaderStyle = styled.header`
         svg {
           margin-right: 6px;
         }
+      }
+    }
+  }
+
+  @media ${({ theme }) => theme.mediaQuery.mobile} {
+    height: 52px;
+
+    .logo {
+      padding: 0 0 0 12px;
+    }
+
+    img {
+      width: 140px;
+    }
+
+    .auth {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
+
+    .category {
+      .menu-button {
+        display: flex;
+        position: absolute;
+        top: 14px;
+        right: ${({$isOpen}) => ($isOpen ? "62%" : "52px")};
+        background: #fff;
+        border: 0;
+        font-size: 1.5rem;
+      }
+
+      ul {
+        position: fixed;
+        top: 0;
+        right: ${({$isOpen}) => ($isOpen ? "0" : "-100%")};
+        width: 60%;
+        height: 100vh;
+        background: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        transition: right 0.3s ease-in-out;
+
+        margin: 0;
+        padding: 24px;
+        z-index: 1000;
+
+        flex-direction: column;
+        gap: 16px;
       }
     }
   }
